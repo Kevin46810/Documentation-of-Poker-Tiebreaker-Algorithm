@@ -1,0 +1,105 @@
+I will break down parts of my tiebreaker code that may be confusing.
+
+The vector called "hands" is a list of 6 different hand objects. Each one contains a 5-card combination vector in a field called "cards."
+So, when I run a for loop that iterates until j reaches hands[i].cards.size(), it goes until it goes through that entire 5-card combination on that current hand object.
+
+The assignSuitVals method uses gives the each card in the hand object's 5-card combination a numerical suit value ('D' = 1, 'C' = 2, 'H' = 3, 'S' = 4). This will allow
+us to break ties by suits.
+  
+The handRank field contains the numerical ranking of the hand object it's attached to. In the tiebreaker, this value gets incremented by each card's rank and suit value 
+in the hand object's 5-card combination. The list of 6 hands then gets resorted based off these updated handRank values.
+
+You may already be questioning how this works. Wouldn't incrementing the original hand rank screw up its original value? I prevent this from happening with 3 strategies:
+
+#1 Below are the numerical values I have each hand ranking stored as. The reason why they're so large is so that when I increment the hand value, I will never increase it
+so much that the program will confuse it with another ranking. So, if, say since HIGH_CARD and PAIR have a difference of 100,000, there's no way it'll cross over from being 
+a HIGH_CARD to a PAIR when I perform the tiebreaker because that difference is so large. This part will make more sense in the next point.
+
+const int HIGH_CARD = 100000;
+const int PAIR = 200000;
+const int TWO_PAIR = 300000;
+const int THREE_KIND = 400000;
+const int STRAIGHT = 500000;
+const int FLUSH = 600000;
+const int FULL_HOUSE = 700000;
+const int FOUR_KIND = 800000;
+const int STRAIGHT_FLUSH = 900000;
+const int ROYAL_FLUSH = 1000000;
+
+#2 I round down the hand value when I go to print out the final hand rankings. Observe the int rank variable in the code below. Let's say I increment a HIGH_CARD handRank during the
+  tiebreaker. Let's say it's now something like 120,432 once it's done incrementing. If I try to match the number 120,432, the program will say it's an invalid hand ranking, which
+  means I need to change it back to its original state. So, that's why I need to round down to the nearest hundred thousand so that we can get back its original value and allow the
+  program to know which hank ranking it belongs to.
+  
+
+int rank = round(hands[i].handRank / 100000.0) * 100000;
+
+    switch (rank) {
+      case HIGH_CARD: cout << "High Card" << endl; break;
+      case PAIR: cout << "Pair" << endl; break;
+      case TWO_PAIR: cout << "Two Pair" << endl; break;
+      case THREE_KIND: cout << "Three of a Kind" << endl; break;
+      case STRAIGHT: cout << "Straight" << endl; break;
+      case FLUSH: cout << "Flush" << endl; break;
+      case FULL_HOUSE: cout << "Full House" << endl; break;
+      case FOUR_KIND: cout << "Four of a Kind" << endl; break;
+      case STRAIGHT_FLUSH: cout << "Straight flush" << endl; break;
+      case ROYAL_FLUSH: cout << "Royal Flush" << endl; break;
+      default:
+        cerr << "Invalid hand ranking." << endl;
+        exit(1);
+    }
+
+#3 Consider this line right here from the tiebreaker algorithm:
+
+int cardRank = hands[i].cards[j].cardRank * 100;
+
+The cardRank variable is what I use to break ties based on card rank. The part may stick out is that I multiply it by 100. This is necessary because we want the card rank tiebreaker
+to hold more precedence than the suit tiebreaker. Let's say that we had a 6-card hand that featured 4D 4C 3C 3H 2H 2S. Let's also take out that x100 multiplier. By taking out that
+x100 multiplier, the result would be:
+
+***High Hand Order***
+ 4C  4D  3H  3C  2S |  2H -- Two Pair
+ 4C  4D  3H  2S  2H |  3C -- Two Pair
+ 4C  3H  3C  2S  2H |  4D -- Two Pair
+ 4C  4D  3H  3C  2H |  2S -- Two Pair
+ 4C  4D  3C  2S  2H |  3H -- Two Pair
+ 4D  3H  3C  2S  2H |  4C -- Two Pair
+
+Which is incorrect. When I bring back that x100 multiplier, we get:
+
+***High Hand Order***
+ 4C  4D  3H  3C  2S |  2H -- Two Pair
+ 4C  4D  3H  3C  2H |  2S -- Two Pair
+ 4C  4D  3H  2S  2H |  3C -- Two Pair
+ 4C  4D  3C  2S  2H |  3H -- Two Pair
+ 4C  3H  3C  2S  2H |  4D -- Two Pair
+ 4D  3H  3C  2S  2H |  4C -- Two Pair
+
+ Which is now correct.
+
+ So, in summary, this tiebreaker algorithm works by looping through a list of 6 hand objects, then two nested loops for their 5-card list's card ranks and suits that are used
+ to increment the objects hand rank. Then, once all of the hand objects' hand ranks have been updated, we resort the list in descending order. This algorithm can only work
+ when we're comparing hand combinations from the same hand. If we were comparing two entirely separate hands, it would not work. However, since we are not trying to achieve
+ that, this algorithm is something that can be greatly beneficial for what we're trying to accomplish.
+
+
+void breakTies(vector<Hand> &hands) {
+
+  for (int i = 0; i < hands.size(); i++) {
+    for (int j = 0; j < hands[i].cards.size(); j++) {
+      int cardRank = hands[i].cards[j].cardRank * 100;
+      hands[i].handRank += cardRank;
+    }
+
+    assignSuitVals(hands[i].cards);
+
+    for (int j = 0; j < hands[i].cards.size(); j++) {
+      int cardSuitVal = hands[i].cards[j].suitVal;
+      hands[i].handRank += cardSuitVal;
+    }
+  }
+
+  sort(hands.begin(), hands.end());
+  reverse(hands.begin(), hands.end());
+}
