@@ -81,25 +81,4 @@ Which is incorrect. When I bring back that x100 multiplier, we get:
  So, in summary, this tiebreaker algorithm works by looping through a list of 6 hand objects, then two nested loops for their 5-card list's card ranks and suits that are used
  to increment the objects hand rank. Then, once all of the hand objects' hand ranks have been updated, we resort the list in descending order. This algorithm can only work
  when we're comparing hand combinations from the same hand. If we were comparing two entirely separate hands, it would not work. However, since we are not trying to achieve
- that, this algorithm is something that can be greatly beneficial for what we're trying to accomplish.
-
-
-void breakTies(vector<Hand> &hands) {
-
-  for (int i = 0; i < hands.size(); i++) {
-    for (int j = 0; j < hands[i].cards.size(); j++) {
-      int cardRank = hands[i].cards[j].cardRank * 100;
-      hands[i].handRank += cardRank;
-    }
-
-    assignSuitVals(hands[i].cards);
-
-    for (int j = 0; j < hands[i].cards.size(); j++) {
-      int cardSuitVal = hands[i].cards[j].suitVal;
-      hands[i].handRank += cardSuitVal;
-    }
-  }
-
-  sort(hands.begin(), hands.end());
-  reverse(hands.begin(), hands.end());
-}
+ that, this algorithm is something that can be greatly beneficial for what we're trying to accomplish. 
